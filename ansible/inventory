@@ -1,0 +1,7 @@
+all:
+  hosts:
+    pve02:
+
+proxmox_nodes:
+  hosts:
+    pve02:

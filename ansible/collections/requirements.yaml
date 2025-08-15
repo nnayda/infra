@@ -1,0 +1,6 @@
+---
+collections:
+  - name: community.general
+    version: "10.7.3"
+  - name: community.sops
+    version: "2.2.1"   # SOPS plugins; requires the sops CLI on PATH

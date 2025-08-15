@@ -1,0 +1,7 @@
+---
+- name: Bootstrap a new Proxmox node
+  hosts: proxmox_nodes
+  become: true
+  gather_facts: true
+  roles:
+    - proxmox_bootstrap

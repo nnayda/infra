@@ -1,0 +1,116 @@
+---
+- name: Ensure we are running as root
+  ansible.builtin.assert:
+    that: ansible_user_id == 'root'
+    fail_msg: "This role must run as root (use become: true)."
+
+# ----- Role creation -----
+
+- name: Check if Terraform role exists
+  ansible.builtin.shell: |
+    set -o pipefail
+    pveum role list --noborder 1 --noheader 1 \
+    | awk -v want={{ proxmox_bootstrap_terraform_role_name | quote }} '
+        ($1 == want){found=1}
+        END{ exit found ? 0 : 1 }'
+  args:
+    executable: /bin/bash
+  register: proxmox_bootstrap_role_check
+  changed_when: false
+  failed_when: proxmox_bootstrap_role_check.rc not in [0,1]
+
+- name: Create Terraform role with required privileges
+  ansible.builtin.command:
+    cmd: >-
+      pveum role add {{ proxmox_bootstrap_terraform_role_name }} -privs "{{ proxmox_bootstrap_terraform_privs | join(' ') }}"
+  when: proxmox_bootstrap_role_check.rc == 1
+  changed_when: proxmox_bootstrap_role_check.rc == 1
+
+# ----- User creation -----
+
+- name: Check if Terraform user exists
+  ansible.builtin.shell: |
+    set -o pipefail
+    pveum user list --noborder 1 --noheader 1 \
+    | awk -v want={{ proxmox_bootstrap_terraform_user | quote }} '
+        ($1 == want){found=1}
+        END{ exit found ? 0 : 1 }'
+  args:
+    executable: /bin/bash
+  register: proxmox_bootstrap_user_check
+  changed_when: false
+  failed_when: proxmox_bootstrap_user_check.rc not in [0,1]
+
+- name: Create Terraform user
+  ansible.builtin.command:
+    cmd: >-
+      pveum user add {{ proxmox_bootstrap_terraform_user }} --password {{ proxmox_bootstrap_terraform_password | quote }}
+  when: proxmox_bootstrap_user_check.rc == 1
+  changed_when: proxmox_bootstrap_user_check.rc == 1
+  no_log: true  # hide password
+
+# ----- ACL assignment -----
+
+- name: Check if ACL already assigned at /
+  ansible.builtin.shell: |
+    set -o pipefail
+    pveum acl list --noborder 1 --noheader 1 \
+    | awk -v role={{ proxmox_bootstrap_terraform_role_name | quote }} \
+           -v subj={{ proxmox_bootstrap_terraform_user | quote }} '
+        ($2==role && $4==subj){found=1}
+        END{ exit found ? 0 : 1 }'
+  args:
+    executable: /bin/bash
+  register: proxmox_bootstrap_acl_check
+  changed_when: false
+  failed_when: proxmox_bootstrap_acl_check.rc not in [0,1]
+
+- name: Assign role to user at /
+  ansible.builtin.command:
+    cmd: >-
+      pveum aclmod / -user {{ proxmox_bootstrap_terraform_user }} -role {{ proxmox_bootstrap_terraform_role_name }}
+  when: proxmox_bootstrap_acl_check.rc == 1
+  changed_when: proxmox_bootstrap_acl_check.rc == 1
+
+# ----- Token creation -----
+
+- name: Check if token already exists
+  ansible.builtin.shell: |
+    set -o pipefail
+    pveum user token list {{ proxmox_bootstrap_terraform_user }} --noborder 1 --noheader 1 \
+    | awk -v want={{ proxmox_bootstrap_terraform_token_id | quote }} '
+        ($1 == want){found=1}
+        END{ exit found ? 0 : 1 }'
+  args:
+    executable: /bin/bash
+  register: proxmox_bootstrap_token_check
+  changed_when: false
+  failed_when: proxmox_bootstrap_token_check.rc not in [0,1]
+
+- name: Create API token for Terraform user
+  ansible.builtin.command: >-
+    pveum user token add {{ proxmox_bootstrap_terraform_user }} {{ proxmox_bootstrap_terraform_token_id }}
+    {% if not proxmox_bootstrap_token_privsep %} --privsep 0 {% endif %}
+  when: proxmox_bootstrap_token_check.rc == 1
+  changed_when: proxmox_bootstrap_token_check.rc == 1
+  register: proxmox_bootstrap_token_create
+  no_log: true
+
+- name: Save token secret to file (first-time only)
+  ansible.builtin.copy:
+    dest: "{{ proxmox_bootstrap_token_output_path }}"
+    mode: "0600"
+    owner: root
+    group: root
+    content: |
+      # Proxmox API token for {{ proxmox_bootstrap_terraform_user }}
+      # tokenid: {{ proxmox_bootstrap_terraform_user }}!{{ proxmox_bootstrap_terraform_token_id }}
+      # Created: {{ ansible_date_time.iso8601 }}
+      {{ (proxmox_bootstrap_token_create.stdout | default('')) | trim }}
+  when: proxmox_bootstrap_token_check.rc == 1
+  no_log: true
+
+- name: Display token location (not the secret)
+  ansible.builtin.debug:
+    msg: "Token created and saved to {{ proxmox_bootstrap_token_output_path }} (permissions 0600). Keep it safe."
+  when: proxmox_bootstrap_token_check.rc == 1

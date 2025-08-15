@@ -1,0 +1,13 @@
+---
+# Terraform user & token settings
+proxmox_bootstrap_terraform_user: "terraform@pve"
+proxmox_bootstrap_terraform_token_id: "tf-token"
+
+# Where to store the generated token secret on the Proxmox node
+proxmox_bootstrap_token_output_path: "/root/terraform.token"
+
+# NOTE: Set this via extra-vars or vault; never commit real passwords
+proxmox_bootstrap_terraform_password: ""
+
+# If you want the token to be privileged-separation disabled (classic behavior)
+proxmox_bootstrap_token_privsep: false

@@ -1,0 +1,35 @@
+---
+- name: Configure server for ansible
+  hosts: "{{ var_host | default('none') }}"
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Ensure ansible group exists
+      ansible.builtin.group:
+        name: "{{ ansible_group }}"
+        gid: "{{ ansible_group_id }}"
+        state: present
+
+    - name: Ensure ansible user exists
+      ansible.builtin.user:
+        name: "{{ ansible_user_create }}"
+        group: "{{ ansible_group }}"
+        uid: "{{ ansible_user_id }}"
+        create_home: true
+        groups: sudo
+        append: true
+        shell: /bin/bash
+        state: present
+
+    - name: Allow Ansible user to have passwordless sudo
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ ansible_user_create }}"
+        content: "{{ ansible_user_create }} ALL=(ALL) NOPASSWD:ALL\n"
+        mode: '0440'
+
+    - name: Set up authorized keys for SSH access
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user_create }}"
+        state: present
+        key: "{{ lookup('file', key_dir + 'ansible.pub') }}"

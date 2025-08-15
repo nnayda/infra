@@ -1,0 +1,16 @@
+proxmox_bootstrap_terraform_password: ENC[AES256_GCM,data:u4es93UuHMKirJXC,iv:nBAlHzpRnR/QvDYOmpSJLekd+b6Yo/9MgPkKoH+XWB0=,tag:YRzeTjWF4T6331fVwbh8FQ==,type:str]
+sops:
+  age:
+    - recipient: age1gn26sdvddd7dj84gh3zza70deklsgp69nmzwjm3yg9wggzljsv9snaje3e
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBLazBkMS9xK2prWCtyc1hB
+        eGF5Uyt6VDJHbDNGTzZKekRQNmVUalZ1VWswClRHak1XRWdHVUtQK0E1bFZhM0dp
+        eTFrbHBpbEg0eTR2N3FrbDVjK3BhSE0KLS0tIHlzRHgwTjVIYWNXdjBUQnFMSXc1
+        ZmFZVnUyd1M4Wm53R3IwVHpYL3lEeVkK82O6bHADJwwA2McBqTNsUHU3qRsqu0R7
+        YUmyMbAtUIr/YkyaNJit9scJW6/H2Qt/ayfzwn7kqr+x2SRJ1I2MYw==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2025-08-14T20:23:54Z"
+  mac: ENC[AES256_GCM,data:bh03InXSoAuBpgjJG8iwL+BEN8YYoDFp2rwCXL1h6iNj21sLFnB1u3FqP3CfK9+k4VfUQG5Gi26yc1t8X+lXFmYXVZFBknqvlVktFvLxk5sIrtt3XQx+c9U1ewSRIZMEu6vsATjz89OYkJWFS6pzmNibCE/ATt1/dSEpsdcdG0Q=,iv:socB9NC6kKbj7g67pmnBdgZXF7o11+FgmKRddq0THJU=,tag:AyAZOQnF1SW31zNdXYFu0Q==,type:str]
+  unencrypted_suffix: _unencrypted
+  version: 3.10.2
