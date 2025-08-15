@@ -11,6 +11,8 @@ tasks:
       - task: brew
       - echo "Installing python dependencies..."
       - task: uv
+      - echo "Installing pre-commit hooks..."
+      - task: precommit
       - echo
       - echo "Ensure the age key is present on your machine."
       - echo "See https://github.com/getsops/sops?tab=readme-ov-file#encrypting-using-age for further details."
@@ -23,6 +25,11 @@ tasks:
     cmds:
       - uv sync
     desc: "Install the uv dependiencies for this repo."
+    silent: true
+  precommit:
+    cmds:
+      - uv run pre-commit install
+    desc: "Install the pre-commit hooks."
     silent: true
   ansible:
     cmds:
@@ -47,4 +54,3 @@ tasks:
     desc: "Provision a Proxmox node."
     dir: ./ansible
     silent: true
-  

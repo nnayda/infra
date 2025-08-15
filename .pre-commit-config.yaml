@@ -1,0 +1,85 @@
+default_stages: [pre-commit]
+default_language_version:
+  python: python3
+
+repos:
+  # --- General hygiene & formatting ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: forbid-new-submodules
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: check-yaml
+        # Skip SOPS-encrypted YAML (schema/parse can fail on ciphertext)
+        exclude: '(^secrets/|\.sops\.ya?ml$)'
+      - id: check-json
+      - id: pretty-format-json
+        args: ["--autofix", "--no-sort-keys"]
+      - id: check-toml
+
+  # --- Basic Shell lint ---
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^scripts/|\.sh$
+
+  # --- Terraform formatting ---
+  - repo: local
+    hooks:
+      - id: terraform-fmt
+        name: terraform fmt (recursive)
+        language: system
+        entry: bash -c 'command -v terraform >/dev/null 2>&1 && terraform fmt -recursive -diff || { echo "terraform not installed; skipping fmt"; exit 0; }'
+        pass_filenames: false
+        files: '\.tf(vars)?$'
+
+  # --- SOPS safety: ensure files that SHOULD be encrypted are actually encrypted ---
+  # Strategy:
+  #   * Treat anything in secrets/ or with *.sops.(yaml|yml|json|env) as "must be encrypted".
+  #   * Verify presence of typical SOPS markers:
+  #       - YAML/JSON: a top-level "sops:" block
+  #       - Generic:   at least one "ENC[" token
+  #
+  # If a file matches and lacks markers, the commit fails.
+  - repo: local
+    hooks:
+      - id: sops-encrypted-guard
+        name: ensure SOPS-encrypted files are encrypted
+        language: system
+        types_or: [text]
+        files: '(^secrets/|\.sops\.(ya?ml|json|env)$)'
+        exclude: '(^|/)\.sops\.ya?ml$'   # <-- do not check .sops.yaml
+        entry: |-
+          bash -c '
+          failed=0
+          for f in "$@"; do
+            [ -s "$f" ] || continue
+            if grep -qE "^(sops:)$" "$f"; then
+              continue
+            elif grep -q "ENC\[" "$f"; then
+              continue
+            else
+              echo "❌ $f appears to be plaintext but matches SOPS-protected patterns."
+              echo "   Tip: sops -e -i $f"
+              failed=1
+            fi
+          done
+          exit $failed
+          '
+
+  # --- YAML lint with friendly messages (skips encrypted files) ---
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: yamllint
+        language: system
+        entry: bash -c 'command -v yamllint >/dev/null 2>&1 && yamllint -s || { echo "yamllint not installed; skipping"; exit 0; }'
+        files: '\.ya?ml$'
+        exclude: '(^secrets/|\.sops\.ya?ml$)'
