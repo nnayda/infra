@@ -3,7 +3,7 @@ name = "infra"
 version = "0.1.0"
 description = "Infrastructure as code using Ansible, Terraform, Flux, and Renovate Bot, among others, to deploy a Kubernetes cluster on Talos."
 authors = [
-    { name="Nathan Nayda", email="ntnayda@gmail.com" },
+    { name="Nathan Nayda" },
 ]
 readme = "README.md"
 requires-python = ">=3.12"
