@@ -36,8 +36,10 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Ignore ansible collections
+# Ignore ansible files
 ansible/collections/ansible_collections
+.ansible
+ansible/ansible.log
 
 # Ignore venvs
 .venv
