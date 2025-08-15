@@ -17,7 +17,12 @@ and bootstrapping it to get started.
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)"
     ```
 4. Add the proxmox node details to the ansible inventory, host_vars, and group_vars (if necessary).
-5. Run the setup:proxmox task so that we can use ansible/terrafrom to provision Proxmox.
+5. Run the setup:host task so that we can use ansible to configure Proxmox. Adjust 
+    `HOST` and `USER` accordingly.
     ```bash
-    task setup:proxmox HOST=pve02 USER=root
+    task setup:host HOST=pve02 USER=root
+    ```
+6. Run the setup:proxmox task so that we can use terraform to provision VMs.
+    ```bash
+    task setup:proxmox
     ```

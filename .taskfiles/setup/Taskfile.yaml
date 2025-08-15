@@ -43,7 +43,6 @@ tasks:
         - HOST
   proxmox:
     cmds:
-      - task: host
       - uv run ansible-playbook plays/proxmox_bootstrap.yaml
     desc: "Provision a Proxmox node."
     dir: ./ansible
