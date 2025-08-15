@@ -55,24 +55,33 @@ repos:
         language: system
         types_or: [text]
         files: '(^secrets/|\.sops\.(ya?ml|json|env)$)'
-        exclude: '(^|/)\.sops\.ya?ml$'   # <-- do not check .sops.yaml
+        exclude: '^.sops\.ya?ml$'   # <-- do not check .sops.yaml
         entry: |-
           bash -c '
-          failed=0
-          for f in "$@"; do
-            [ -s "$f" ] || continue
-            if grep -qE "^(sops:)$" "$f"; then
-              continue
-            elif grep -q "ENC\[" "$f"; then
-              continue
-            else
-              echo "❌ $f appears to be plaintext but matches SOPS-protected patterns."
-              echo "   Tip: sops -e -i $f"
+            set -euo pipefail
+            failed=0
+            for f in "$@"; do
+              # skip empty files
+              [ -s "$f" ] || continue
+
+              # If yq is available, prefer a structural check for top-level "sops"
+              if command -v yq >/dev/null 2>&1; then
+                if yq "has(\"sops\")" "$f" >/dev/null 2>&1 || grep -q "ENC\[" "$f"; then
+                  continue
+                fi
+              else
+                # Fallback: look for a line with just "sops:" or any ENC[ token
+                if grep -Eq "^[[:space:]]*sops:[[:space:]]*$" "$f" || grep -q "ENC\[" "$f"; then
+                  continue
+                fi
+              fi
+
+              echo "❌ $f appears to be PLAINTEXT but matches SOPS-protected patterns."
+              echo "   Encrypt it:  sops -e -i \"$f\""
               failed=1
-            fi
-          done
-          exit $failed
-          '
+            done
+            exit $failed
+          ' --
 
   # --- YAML lint with friendly messages (skips encrypted files) ---
   - repo: local
