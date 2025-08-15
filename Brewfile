@@ -1,0 +1,6 @@
+brew "age"
+brew "helm"
+brew "kubectl"
+brew "opentofu"
+brew "sops"
+brew "siderolabs/tap/talosctl"
