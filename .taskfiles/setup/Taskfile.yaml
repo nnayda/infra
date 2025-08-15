@@ -1,0 +1,51 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    desc: "Install and set up all repo dependiencies."
+    silent: true
+    cmds:
+      - echo "Installing brew dependencies..."
+      - task: brew
+      - echo "Installing python dependencies..."
+      - task: uv
+      - echo
+      - echo "Ensure the age key is present on your machine."
+      - echo "See https://github.com/getsops/sops?tab=readme-ov-file#encrypting-using-age for further details."
+  brew:
+    cmds:
+      - brew bundle
+    desc: "Install the brew dependiencies for this repo."
+    silent: true
+  uv:
+    cmds:
+      - uv sync
+    desc: "Install the uv dependiencies for this repo."
+    silent: true
+  ansible:
+    cmds:
+      - uv run ansible-galaxy collection install -r collections/requirements.yaml
+    desc: "Install ansible dependencies."
+    dir: ./ansible
+    silent: true
+  host:
+    cmds:
+      - uv run ansible-playbook plays/setup_ansible_user.yaml -e var_host={{.HOST}} -e ansible_user={{.USER}} --ask-become-pass -k
+    desc: "Provision a host for ansible access."
+    dir: ./ansible
+    silent: true
+    vars:
+      USER: '{{.USER| default "root"}}'
+    requires:
+      vars:
+        - HOST
+  proxmox:
+    cmds:
+      - task: host
+      - uv run ansible-playbook plays/proxmox_bootstrap.yaml
+    desc: "Provision a Proxmox node."
+    dir: ./ansible
+    silent: true
+  
