@@ -1,0 +1,8 @@
+---
+creation_rules:
+  - path_regex: .*sops.ya?ml
+    age: age1gn26sdvddd7dj84gh3zza70deklsgp69nmzwjm3yg9wggzljsv9snaje3e
+
+stores:
+  yaml:
+    indent: 2
